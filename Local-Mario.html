@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Productos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4">Gestión de Productos</h2>
+        
+        <!-- Formulario -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="productoForm">
+                    <input type="hidden" id="productoId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="precio" class="form-label">Precio</label>
+                            <input type="number" class="form-control" id="precio" step="0.01" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productosTabla">
+                </tbody>
+            </table>
+        </div>
+    </div>+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Almacenamiento local de productos
+        let productos = JSON.parse(localStorage.getItem('productos')) || [];
+        let nextId = productos.length > 0 ? Math.max(...productos.map(p => p.id)) + 1 : 1;
+
+        // Elementos del DOM
+        const form = document.getElementById('productoForm');
+        const tabla = document.getElementById('productosTabla');
+
+        // Cargar productos
+        function cargarProductos() {
+            tabla.innerHTML = '';
+            productos.forEach(producto => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${producto.id}</td>
+                    <td>${producto.nombre}</td>
+                    <td>$${producto.precio}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editarProducto(${producto.id})">
+                            Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${producto.id})">
+                            Eliminar
+                        </button>
+                    </td>
+                `;
+                tabla.appendChild(row);
+            });
+            guardarEnStorage();
+        }
+
+        // Guardar/Actualizar producto
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productoId').value;
+            const producto = {
+                id: id ? parseInt(id) : nextId++,
+                nombre: document.getElementById('nombre').value,
+                precio: parseFloat(document.getElementById('precio').value)
+            };
+
+            if (id) {
+                // Actualizar
+                const index = productos.findIndex(p => p.id === parseInt(id));
+                productos[index] = producto;
+            } else {
+                // Nuevo
+                productos.push(producto);
+            }
+
+            form.reset();
+            document.getElementById('productoId').value = '';
+            cargarProductos();
+        });
+
+        // Editar producto
+        function editarProducto(id) {
+            const producto = productos.find(p => p.id === id);
+            document.getElementById('productoId').value = producto.id;
+            document.getElementById('nombre').value = producto.nombre;
+            document.getElementById('precio').value = producto.precio;
+        }
+
+        // Eliminar producto
+        function eliminarProducto(id) {
+            if (confirm('¿Está seguro de eliminar este producto?')) {
+                productos = productos.filter(p => p.id !== id);
+                cargarProductos();
+            }
+        }
+
+        // Guardar en localStorage
+        function guardarEnStorage() {
+            localStorage.setItem('productos', JSON.stringify(productos));
+        }
+
+        // Cargar productos al iniciar
+        cargarProductos();
+    </script>
+</body>
+</html>
